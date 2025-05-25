@@ -1,68 +1,61 @@
-(function(){
-  "use strict";
+// Main Menu Exit
+(function () {
+    "use strict";
 
-  // Конструктор плагина
-  function AnitopPlugin(){
-    this.name = "anitop";
-    this.type = "plugin";
-    this.version = "1.0";
-    this.author = "FFXXI";
-  }
-
-  // Инициализация плагина – вызывается после регистрации
-  AnitopPlugin.prototype.init = function(){
-    console.log("Anitop: Инициализация плагина.");
-    this.renderMenu();
-  };
-
-  // Добавляем пункт в меню приложения
-  AnitopPlugin.prototype.renderMenu = function(){
-    if(window.Lampa && Lampa.Menu && typeof Lampa.Menu.append === "function"){
-      // Добавляем пункт меню с текстом, иконкой и обработчиком клика
-      Lampa.Menu.append({
-        title: "Anitop", // текст пункта меню
-        icon: "film",    // используем стандартную иконку, можно изменить
-        order: 100,      // порядок, по желанию
-        action: this.show.bind(this) // обработчик клика – открывает экран плагина
-      });
-      console.log("Anitop: Пункт меню добавлен.");
-    } else {
-      console.error("Anitop: Lampa.Menu.append не найден!");
-    }
-  };
-
-  // Функция, вызываемая при клике по пункту меню
-  AnitopPlugin.prototype.show = function(){
-    if(window.Lampa && Lampa.Controller && typeof Lampa.Controller.add === "function" && typeof Lampa.Controller.toggle === "function"){
-      // Определяем простую HTML-разметку для экрана плагина
-      var html = '<div style="padding:20px; text-align:center; color:white; font-size:24px;">' +
-                 'Anitop Plugin Activated!<br>Пример работы плагина.' +
-                 '</div>';
-      // Создаем объект экрана (view)
-      var view = {
-        name: "anitop_view",       // имя экрана – должно быть уникальным
-        component: "view",         // сообщаем, что это view
-        template: function(){
-          return html;
+    Lampa.Lang.add({
+        exit_menu: {
+            ru: "Выход",
+            en: "Exit",
+            uk: "Вихід",
+            be: "Вынахад",
+            zh: "出口",
+            pt: "Saída",
+            bg: "Изход"
         }
-      };
-      // Регистрируем и показываем новый экран
-      Lampa.Controller.add(view);
-      Lampa.Controller.toggle("anitop_view");
-      console.log("Anitop: Экран плагина открыт.");
-    } else {
-      console.error("Anitop: Lampa.Controller не доступен!");
+    });
+
+    function exit_m(object) {
+        this.create = function () { };
+        this.build = function () { }; // this.activity.loader(false);
+        this.start = function () { };
+        this.pause = function () { };
+        this.stop = function () { };
+        this.render = function () { };
+        this.destroy = function () { };
     }
-  };
+    function add() {
+        var ico =
+            '<svg version="1.1" id="exit" color="#fff" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"\n	 viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">\n<g>\n	<path fill="currentColor" d="M256,5.1c138.6,0,250.9,112.3,250.9,250.9S394.6,506.9,256,506.9S5.1,394.6,5.1,256S117.4,5.1,256,5.1z\n		 M256,40.1C136.7,40.1,40.1,136.7,40.1,256S136.7,471.9,256,471.9S471.9,375.3,471.9,256S375.3,40.1,256,40.1z M311.4,176.6\n		c6.7-6.7,17.5-6.7,24.2,0c6.7,6.7,6.7,17.5,0,24.2l-55.1,55.1l55.1,55c6.7,6.7,6.7,17.5,0,24.2c-6.7,6.7-17.5,6.7-24.2,0L256.3,280\n		l-55.1,55.1c-6,6-15.4,6.6-22.1,1.8l-2.2-1.8c-6.7-6.7-6.7-17.5,0-24.2l55.1-55l-55.1-55c-6.7-6.7-6.7-17.5,0-24.2s17.5-6.7,24.2,0\n		l55.1,55.1L311.4,176.6z"/>\n</g>\n</svg>';
+        var menu_items = $(
+            '<li class="menu__item selector" data-action="exit_r"><div class="menu__ico">' +
+            ico +
+            '</div><div class="menu__text">' +
+            Lampa.Lang.translate("exit_menu") +
+            "</div></li>"
+        );
+        menu_items.on("hover:enter", function () {
+            Lampa.Activity.out();
+            if (Lampa.Platform.is('apple_tv'))
+                window.location.assign('exit://exit');
+            if (Lampa.Platform.is("tizen"))
+                tizen.application.getCurrentApplication().exit();
+            if (Lampa.Platform.is("webos")) window.close();
+            if (Lampa.Platform.is("android")) Lampa.Android.exit();
+            if (Lampa.Platform.is("orsay")) Lampa.Orsay.exit();
+            if (Lampa.Platform.is("nw")) nw.Window.get().close();
+        });
+        $(".menu .menu__list").eq(1).append(menu_items);
+    }
 
-  // Регистрируем плагин через систему плагинов Lampa
-  if(window.Lampa && Lampa.Plugin && typeof Lampa.Plugin.register === "function"){
-    var plugin = new AnitopPlugin();
-    Lampa.Plugin.register({ name: plugin.name, type: plugin.type, version: plugin.version, author: plugin.author }, plugin);
-    console.log("Anitop: Плагин успешно зарегистрирован.");
-    plugin.init();
-  } else {
-    console.error("Anitop: Lampa.Plugin.register не найден!");
-  }
-
+    function createExitMenu() {
+        window.plugin_exit_m_ready = true;
+        Lampa.Component.add("exit_m", exit_m);
+        if (window.appready) add();
+        else {
+            Lampa.Listener.follow("app", function (e) {
+                if (e.type == "ready") add();
+            });
+        }
+    }
+    if (!window.plugin_exit_m_ready) createExitMenu();
 })();
