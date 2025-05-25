@@ -40,15 +40,14 @@
      2. Добавление пункта меню
   ================================ */
   function addAnitopMenu(){
-    // Простейшая SVG-иконка с буквой "A"
     var ico = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">' +
                 '<circle cx="32" cy="32" r="32" fill="#4CAF50"/>' +
                 '<text x="32" y="42" font-size="24" text-anchor="middle" fill="#fff">A</text>' +
               '</svg>';
     var menu_item = $(
       '<li class="menu__item selector" data-action="anitop">' +
-        '<div class="menu__ico">' + ico + '</div>' +
-        '<div class="menu__text">' + Lampa.Lang.translate("anitop_menu") + '</div>' +
+         '<div class="menu__ico">' + ico + '</div>' +
+         '<div class="menu__text">' + Lampa.Lang.translate("anitop_menu") + '</div>' +
       '</li>'
     );
     // При нажатии переходим через Lampa.Activity.push() в компонент "anitop_main"
@@ -61,7 +60,7 @@
         page: 1
       });
     });
-    // Если у вашей сборки меню находится в другом контейнере – попробуйте изменить индекс (например, eq(0))
+    // Если ваша сборка имеет меню в другом контейнере – попробуйте изменить индекс, например, .eq(0)
     $(".menu .menu__list").eq(1).append(menu_item);
     console.log("Anitop plugin: Menu item added");
   }
@@ -83,8 +82,10 @@
      3. API для парсинга
   ================================ */
   var AnitopApi = {
-    // Загружает HTML каталога и парсит карточки аниме
+    // Загружает HTML страницы каталога и пытается найти карточки аниме
     loadCatalog: function(callback, onError){
+      // Если требуется использовать прокси, раскомментируйте следующую строку:
+      // var catalogUrl = "https://corsproxy.io/?https://anilib.me/ru/catalog";
       var catalogUrl = "https://anilib.me/ru/catalog";
       console.log("AnitopApi: Loading catalog from", catalogUrl);
       fetch(catalogUrl)
@@ -94,9 +95,7 @@
         .then(function(htmlText){
           var parser = new DOMParser();
           var doc = parser.parseFromString(htmlText, "text/html");
-          // === ВАЖНО! ===
-          // Проверьте, какие селекторы соответствуют карточкам аниме на сайте anilib.me.
-          // Ниже используются условные селекторы: ".anime-card" для карточки, ".anime-title" для названия.
+          // Проверьте актуальные селекторы! Здесь условно: карточки имеют класс ".anime-card"
           var cards = doc.querySelectorAll(".anime-card");
           var items = [];
           cards.forEach(function(card){
@@ -112,7 +111,6 @@
               });
             }
           });
-          // Если парсинг не нашёл карточки, можно вернуть тестовые данные для отладки
           if(items.length === 0){
             console.warn("AnitopApi: No items found – using dummy data");
             items = [
@@ -122,14 +120,14 @@
             ];
           }
           callback({ results: items, page: 1, total_pages: 1 });
-          console.log("AnitopApi: Catalog loaded successfully ("+ items.length +" items)");
+          console.log("AnitopApi: Catalog loaded successfully (" + items.length + " items)");
         })
         .catch(function(error){
           console.error("AnitopApi: Catalog loading failed", error);
           onError && onError();
         });
     },
-    // Загружает HTML-страницу деталей и парсит информацию
+    // Загружает HTML-страницу деталей аниме и парсит данные
     loadAnimeDetail: function(url, callback, onError){
       console.log("AnitopApi: Loading anime detail from", url);
       fetch(url)
@@ -139,31 +137,45 @@
         .then(function(htmlText){
           var parser = new DOMParser();
           var doc = parser.parseFromString(htmlText, "text/html");
-          // Проверьте селекторы на странице деталей. Ниже используются условные: ".anime-detail-title", ".anime-detail-desc", ".episode-item", ".ep-num"
+          // Проверьте селекторы на странице деталей – они здесь условные:
           var titleElem = doc.querySelector(".anime-detail-title");
           var descElem = doc.querySelector(".anime-detail-desc");
           var episodeElems = doc.querySelectorAll(".episode-item");
+          // Если селекторы не срабатывают, используем fallback dummy данные
+          if(!titleElem || !descElem){
+            console.warn("AnitopApi: Detail page not parsed – using dummy detail");
+            callback({
+              title: "Dummy Anime Title",
+              description: "This is a dummy description for testing purposes.",
+              episodes: [
+                { number: "1", url: "https://via.placeholder.com/300?text=Ep+1" },
+                { number: "2", url: "https://via.placeholder.com/300?text=Ep+2" }
+              ],
+              quality: ["480p", "720p", "1080p"],
+              voices: ["Русская озвучка", "Оригинал"]
+            });
+            return;
+          }
           var episodes = [];
           episodeElems.forEach(function(ep){
             var epNumElem = ep.querySelector(".ep-num");
             var epNum = epNumElem ? epNumElem.innerText.trim() : "?";
-            // Предполагаем, что ссылка на видео хранится в data-url атрибуте
+            // Предполагаем, что ссылка на видео хранится в атрибуте data-url
             var epLink = ep.getAttribute("data-url") || "#";
             episodes.push({ number: epNum, url: epLink });
           });
           if(episodes.length === 0){
             console.warn("AnitopApi: No episodes found – using dummy episodes");
             episodes = [
-              { number: "1", url: "#" },
-              { number: "2", url: "#" }
+              { number: "1", url: "https://via.placeholder.com/300?text=Ep+1" },
+              { number: "2", url: "https://via.placeholder.com/300?text=Ep+2" }
             ];
           }
-          // Если сайт не предоставляет варианты качества и озвучки, задаём их по умолчанию
           var quality = ["480p", "720p", "1080p"];
           var voices  = ["Русская озвучка", "Оригинал"];
           callback({
-            title: titleElem ? titleElem.innerText.trim() : "Название аниме",
-            description: descElem ? descElem.innerText.trim() : "Описание отсутствует",
+            title: titleElem.innerText.trim(),
+            description: descElem.innerText.trim(),
             episodes: episodes,
             quality: quality,
             voices: voices
@@ -179,7 +191,7 @@
   /* ================================
      4. Компоненты Lampa
   ================================ */
-  // Компонент главного каталога
+  // Компонент главного каталога: вывод карточек аниме
   function componentMain(object){
     var comp = new Lampa.InteractionCategory(object);
     comp.create = function(){
@@ -191,14 +203,17 @@
       return this.render();
     };
     comp.nextPageReuest = function(object, resolve, reject){
-      // Пока без пагинации – можете расширить при необходимости
       AnitopApi.loadCatalog(object, resolve.bind(comp), reject.bind(comp));
     };
-    comp.cardRender = function(object, element, card){
+    // Обновленный метод отрисовки карточки: устанавливаем заголовок и изображение
+    comp.cardRender = function(item, card){
+      card.find('.card__title').text(item.title);
+      card.find('.card__img').attr('src', item.image)
+        .on("error", function(){ $(this).attr("src", "./img/img_broken.svg"); });
       card.onEnter = function(){
         Lampa.Activity.push({
-          url: object.url,  // ссылка на страницу деталей
-          title: object.title,
+          url: item.url,
+          title: item.title,
           component: 'anitop_detail',
           page: 1
         });
@@ -218,7 +233,7 @@
         // Отрисовываем базовый шаблон деталей
         var tpl = Lampa.Template.get('anitop_detail', data, true);
         comp.dom.html(tpl);
-        // После небольшой задержки добавляем интерактивные обработчики
+        // После небольшой задержки добавляем интерактивные элементы
         setTimeout(function(){
           renderDetail(data);
         }, 100);
@@ -232,7 +247,7 @@
   /* ================================
      5. Шаблоны
   ================================ */
-  // Шаблон карточки каталога
+  // Шаблон карточки каталога – простой макет карточки
   Lampa.Template.add('anitop_card',
     "<div class='card anitop-card selector'>" +
       "<div class='card__view'>" +
@@ -241,7 +256,7 @@
       "<div class='card__title'></div>" +
     "</div>"
   );
-  // Шаблон страницы деталей
+  // Шаблон страницы деталей – базовая структура с местом для заголовка, описания, опций и списка серий
   Lampa.Template.add('anitop_detail',
     "<div class='anitop-detail-view' style='padding:20px; color:white;'>" +
       "<h2 class='anitop-detail-title'></h2>" +
@@ -255,22 +270,22 @@
   );
 
   /* ================================
-     6. Отрисовка и обработка деталей
+     6. Обработка и отрисовка детали
   ================================ */
   function attachDetailHandlers(){
-    // Обработчик выбора качества
+    // Обработка выбора качества
     $(".anitop-quality-option").on("hover:enter", function(){
       $(".anitop-quality-option").removeClass("active");
       $(this).addClass("active");
       console.log("Selected quality:", $(this).data("quality"));
     });
-    // Обработчик выбора озвучки
+    // Обработка выбора озвучки
     $(".anitop-voice-option").on("hover:enter", function(){
       $(".anitop-voice-option").removeClass("active");
       $(this).addClass("active");
       console.log("Selected voice:", $(this).data("voice"));
     });
-    // Обработчик выбора серии и запуск плеера
+    // Обработка выбора серии: при нажатии запускается плеер
     $(".anitop-episode").on("hover:enter", function(){
       var epNumber = $(this).data("episode"),
           videoUrl = $(this).data("url");
@@ -282,16 +297,16 @@
     });
   }
   function renderDetail(data){
-    // Получаем шаблон детали и вставляем его в DOM
+    // Получаем шаблон и вставляем его в DOM
     var tpl = Lampa.Template.get('anitop_detail', data, true);
     $(".anitop-detail-view").html(tpl);
-    // Добавляем кнопки для выбора качества
+    // Добавляем кнопки выбора качества
     var qualityHtml = "";
     data.quality.forEach(function(q){
       qualityHtml += "<span class='anitop-quality-option selector' data-quality='" + q + "' style='margin-right:10px; padding:5px; border:1px solid #fff; cursor:pointer;'>" + q + "</span>";
     });
     $(".anitop-quality-options").append(qualityHtml);
-    // Добавляем кнопки для выбора озвучки
+    // Добавляем кнопки выбора озвучки
     var voiceHtml = "";
     data.voices.forEach(function(v){
       voiceHtml += "<span class='anitop-voice-option selector' data-voice='" + v + "' style='margin-right:10px; padding:5px; border:1px solid #fff; cursor:pointer;'>" + v + "</span>";
@@ -307,9 +322,8 @@
   }
 
   /* ================================
-     7. Регистрация кнопки меню (альтернативная реализация)
-     Если вам нужен дополнительный способ запуска плагина через левое меню,
-     аналогичный рабочему плагину коллекций.
+     7. Альтернативная регистрация кнопки меню
+     (по образцу рабочего плагина коллекций)
   ================================ */
   function addMenuButton(){
     var button = $(
@@ -336,12 +350,12 @@
     addMenuButton();
   else {
     Lampa.Listener.follow('app', function(e){
-      if(e.type == 'ready') addMenuButton();
+      if(e.type === 'ready') addMenuButton();
     });
   }
 
   /* ================================
-     8. Запуск плагина
+     7. Запуск плагина
   ================================ */
   function startPlugin(){
     if(!window.anitop_ready && Lampa.Manifest.app_digital >= 242){
