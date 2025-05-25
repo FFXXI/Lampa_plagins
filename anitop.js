@@ -1,27 +1,44 @@
 (function(){
   "use strict";
 
-  console.log("✅ Плагин Anitop загружен!");
+  console.log("=== Anitop Plugin: Script loaded ===");
 
-  function AnitopPlugin() {
-    this.name = "AnitopPlugin";
-  }
-
-  AnitopPlugin.prototype.init = function(){
-    console.log("✅ Плагин AnitopPlugin инициализирован!");
+  // Объект плагина
+  var AnitopPlugin = {
+    name: "anitop",
+    init: function(){
+      console.log("=== Anitop Plugin: Initializing ===");
+      this.addMenuItem();
+    },
+    // Функция добавления пункта меню
+    addMenuItem: function(){
+      if(window.Lampa && Lampa.Menu && typeof Lampa.Menu.append === "function"){
+        Lampa.Menu.append({
+          title: "Anitop",
+          icon: "film", // Иконка – можно заменить по желанию
+          action: function(){
+            console.log("=== Anitop Plugin: Menu item clicked ===");
+            alert("Anitop plugin activated – тестовый ответ!");
+          }
+        });
+        console.log("=== Anitop Plugin: Menu item added successfully ===");
+      } else {
+        console.error("=== Anitop Plugin: Lampa.Menu.append not available! ===");
+      }
+    }
   };
 
-  if (window.Lampa && typeof window.Lampa.Plugin.register === "function") {
+  // Регистрируем плагин в системе Lampa
+  if(window.Lampa && Lampa.Plugin && typeof Lampa.Plugin.register === "function"){
     try {
-      let plugin = new AnitopPlugin();
-      Lampa.Plugin.register({ name: "anitop" }, plugin);
-      plugin.init();
-      console.log("✅ Плагин Anitop успешно зарегистрирован!");
-    } catch (e) {
-      console.error("❌ Ошибка при регистрации плагина Anitop:", e);
+      Lampa.Plugin.register({ name: "anitop" }, AnitopPlugin);
+      console.log("=== Anitop Plugin: Registered successfully ===");
+      AnitopPlugin.init();
+    } catch(e) {
+      console.error("=== Anitop Plugin: Error during registration: ===", e);
     }
   } else {
-    console.warn("⚠️ Ошибка: Lampa.Plugin.register не найден!");
+    console.error("=== Anitop Plugin: Lampa.Plugin.register not found! ===");
   }
-
 })();
+
