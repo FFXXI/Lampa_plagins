@@ -28,7 +28,7 @@
           animeParser.openCatalog();
       });
 
-      $(".menu .menu__list").eq(1).append(menu_item);
+      $(".menu .menu__list").eq(0).append(menu_item);
       console.log("Anitop plugin: Menu item added");
   }
 
