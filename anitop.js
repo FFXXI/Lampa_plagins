@@ -1,57 +1,68 @@
 (function(){
   "use strict";
-  
+
   // Конструктор плагина
   function AnitopPlugin(){
     this.name = "anitop";
     this.type = "plugin";
     this.version = "1.0";
+    this.author = "FFXXI";
   }
 
-  // Метод инициализации плагина. Вызывается после регистрации.
+  // Инициализация плагина – вызывается после регистрации
   AnitopPlugin.prototype.init = function(){
-    console.log("AnitopPlugin: Инициализация плагина");
-    // Добавляем пункт меню, если API Lampa доступно
+    console.log("Anitop: Инициализация плагина.");
+    this.renderMenu();
+  };
+
+  // Добавляем пункт в меню приложения
+  AnitopPlugin.prototype.renderMenu = function(){
     if(window.Lampa && Lampa.Menu && typeof Lampa.Menu.append === "function"){
+      // Добавляем пункт меню с текстом, иконкой и обработчиком клика
       Lampa.Menu.append({
-        title: "Anitop",  // Текст пункта меню
-        icon: "film",     // Иконка (можно заменить на любую подходящую)
-        order: 100,       // Порядок следования в меню (необязательно)
-        action: this.action.bind(this) // Обработчик клика по этому пункту
+        title: "Anitop", // текст пункта меню
+        icon: "film",    // используем стандартную иконку, можно изменить
+        order: 100,      // порядок, по желанию
+        action: this.show.bind(this) // обработчик клика – открывает экран плагина
       });
-      console.log("AnitopPlugin: Пункт меню добавлен");
+      console.log("Anitop: Пункт меню добавлен.");
     } else {
-      console.error("AnitopPlugin: Lampa.Menu.append не найден");
+      console.error("Anitop: Lampa.Menu.append не найден!");
     }
   };
 
-  // Метод, вызываемый при нажатии на пункт меню
-  AnitopPlugin.prototype.action = function(){
-    console.log("AnitopPlugin: Выполнено действие пункта меню");
-    // Создаём новый экран (view) с тестовым содержимым
+  // Функция, вызываемая при клике по пункту меню
+  AnitopPlugin.prototype.show = function(){
     if(window.Lampa && Lampa.Controller && typeof Lampa.Controller.add === "function" && typeof Lampa.Controller.toggle === "function"){
-      var screen = {
-        name: "anitop_view",
-        component: "view",
+      // Определяем простую HTML-разметку для экрана плагина
+      var html = '<div style="padding:20px; text-align:center; color:white; font-size:24px;">' +
+                 'Anitop Plugin Activated!<br>Пример работы плагина.' +
+                 '</div>';
+      // Создаем объект экрана (view)
+      var view = {
+        name: "anitop_view",       // имя экрана – должно быть уникальным
+        component: "view",         // сообщаем, что это view
         template: function(){
-          return '<div style="padding:20px; color:white; text-align:center;">Anitop Plugin Activated!</div>';
+          return html;
         }
       };
-      Lampa.Controller.add(screen);
+      // Регистрируем и показываем новый экран
+      Lampa.Controller.add(view);
       Lampa.Controller.toggle("anitop_view");
-      console.log("AnitopPlugin: Экран активирован");
+      console.log("Anitop: Экран плагина открыт.");
     } else {
-      console.error("AnitopPlugin: Lampa.Controller не доступен");
+      console.error("Anitop: Lampa.Controller не доступен!");
     }
   };
 
-  // Регистрируем плагин через API Lampa
+  // Регистрируем плагин через систему плагинов Lampa
   if(window.Lampa && Lampa.Plugin && typeof Lampa.Plugin.register === "function"){
     var plugin = new AnitopPlugin();
-    Lampa.Plugin.register({ name: "anitop", type: "plugin", version: "1.0" }, plugin);
+    Lampa.Plugin.register({ name: plugin.name, type: plugin.type, version: plugin.version, author: plugin.author }, plugin);
+    console.log("Anitop: Плагин успешно зарегистрирован.");
     plugin.init();
-    console.log("AnitopPlugin: Плагин успешно зарегистрирован");
   } else {
-    console.error("AnitopPlugin: Lampa.Plugin.register не найден");
+    console.error("Anitop: Lampa.Plugin.register не найден!");
   }
+
 })();
